@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        img { width: 100%; max-width: 500px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<h2>Business Analytics Report</h2>
+<p><strong>Total Revenue:</strong> ₹ {{ revenue }}</p>
+
+{% for chart in charts %}
+<img src="{{ chart }}">
+{% endfor %}
+
+</body>
+</html>

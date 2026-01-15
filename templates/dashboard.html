@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Business Analytics Dashboard</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        @media (max-width: 768px) {
+            h2 { font-size: 1.4rem; }
+            h3 { font-size: 1.3rem; }
+            h6 { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+<div class="container-fluid p-3">
+
+    <h2 class="text-center mb-3">📊 Business Analytics Dashboard</h2>
+
+    <!-- KPI + DOWNLOAD -->
+    <div class="row mb-3 align-items-center">
+
+        <div class="col-12 col-md-3 mb-2">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h6>Total Revenue</h6>
+                    <h3 class="text-success">₹ {{ revenue }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-3 mb-2">
+            <button onclick="downloadPDFWithCharts()"
+                    class="btn btn-outline-dark w-100">
+                ⬇ Download Report (PDF)
+            </button>
+        </div>
+
+    </div>
+
+    <!-- FILTERS + CHART SELECTOR -->
+    <div class="card shadow-sm p-3 mb-3">
+        <div class="row g-3">
+
+            <div class="col-12 col-md-4">
+                <label class="fw-bold">Product Filter</label>
+                <select id="productFilter" class="form-select" onchange="applyFilter()">
+                    <option value="All">All Products</option>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-8">
+                <label class="fw-bold">Show Charts</label>
+                <div class="d-flex flex-wrap gap-3 mt-1">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked onchange="toggleChart('barBox')">
+                        <label class="form-check-label">Bar</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked onchange="toggleChart('pieBox')">
+                        <label class="form-check-label">Pie</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked onchange="toggleChart('lineBox')">
+                        <label class="form-check-label">Line</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked onchange="toggleChart('histBox')">
+                        <label class="form-check-label">Histogram</label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="row g-3">
+
+        <div class="col-12 col-md-6" id="barBox">
+            <div class="card shadow-sm p-3">
+                <h6 class="text-center">Quantity by Product</h6>
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6" id="pieBox">
+            <div class="card shadow-sm p-3">
+                <h6 class="text-center">Revenue Share</h6>
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6" id="lineBox">
+            <div class="card shadow-sm p-3">
+                <h6 class="text-center">Sales Trend</h6>
+                <canvas id="lineChart"></canvas>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6" id="histBox">
+            <div class="card shadow-sm p-3">
+                <h6 class="text-center">Sales Distribution</h6>
+                <canvas id="histChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+const salesData = {{ sales_by_product | tojson }};
+const quantityData = {{ quantity_by_product | tojson }};
+
+let barChart, pieChart, lineChart, histChart;
+
+// Populate filter
+const productFilter = document.getElementById("productFilter");
+Object.keys(salesData).forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p;
+    opt.text = p;
+    productFilter.add(opt);
+});
+
+function toggleChart(id) {
+    const el = document.getElementById(id);
+    el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
+function applyFilter() {
+    const selected = productFilter.value;
+
+    if (selected === "All") {
+        updateCharts(salesData, quantityData);
+    } else {
+        updateCharts(
+            { [selected]: salesData[selected] },
+            { [selected]: quantityData[selected] }
+        );
+    }
+}
+
+function updateCharts(sales, qty) {
+    const labels = Object.keys(qty);
+    const qtyValues = Object.values(qty);
+    const salesValues = Object.values(sales);
+
+    barChart?.destroy();
+    pieChart?.destroy();
+    lineChart?.destroy();
+    histChart?.destroy();
+
+    barChart = new Chart(barChartEl, {
+        type: "bar",
+        data: { labels, datasets: [{ data: qtyValues, backgroundColor:"#0d6efd" }] }
+    });
+
+    pieChart = new Chart(pieChartEl, {
+        type: "pie",
+        data: { labels, datasets: [{ data: salesValues, backgroundColor:["#0d6efd","#198754","#ffc107","#dc3545"] }] }
+    });
+
+    lineChart = new Chart(lineChartEl, {
+        type: "line",
+        data: { labels, datasets: [{ data: qtyValues, borderColor:"#198754", tension:0.3 }] }
+    });
+
+    histChart = new Chart(histChartEl, {
+        type: "bar",
+        data: { labels, datasets: [{ data: salesValues, backgroundColor:"#ffc107" }] }
+    });
+}
+
+// Chart references
+const barChartEl = document.getElementById("barChart");
+const pieChartEl = document.getElementById("pieChart");
+const lineChartEl = document.getElementById("lineChart");
+const histChartEl = document.getElementById("histChart");
+
+updateCharts(salesData, quantityData);
+
+// PDF EXPORT
+function downloadPDFWithCharts() {
+    const charts = [barChart, pieChart, lineChart, histChart];
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = "/download-pdf";
+
+    charts.forEach((c, i) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "chart" + i;
+        input.value = c.toBase64Image();
+        form.appendChild(input);
+    });
+
+    const rev = document.createElement("input");
+    rev.type = "hidden";
+    rev.name = "revenue";
+    rev.value = "{{ revenue }}";
+    form.appendChild(rev);
+
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+
+</body>
+</html>
