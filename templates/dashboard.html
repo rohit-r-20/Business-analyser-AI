@@ -33,6 +33,10 @@
 
             <form action="/download-pdf" method="post">
                 <input type="hidden" name="revenue" value="{{ revenue }}">
+                <input type="hidden" name="forecast" value="{{ forecast }}">
+                <input type="hidden" name="insights" value='{% for i in insights %}{{ i }}|{% endfor %}'>
+                <input type="hidden" name="top_products" value='{% for l in chart_labels %}{{ l }}|{% endfor %}'>
+                <input type="hidden" name="top_sales" value='{% for d in chart_data %}{{ d }}|{% endfor %}'>
                 <button class="btn-primary-glow">
                     <i class="fas fa-download me-2"></i> Export Report
                 </button>
