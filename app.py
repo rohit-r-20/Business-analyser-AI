@@ -16,8 +16,7 @@ from analytics_engine import generate_insights, forecast_sales
 
 # ---------------- CONFIGURATION ----------------
 app = Flask(__name__)
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# REMOVED: os.makedirs(UPLOAD_FOLDER) to support serverless (read-only) environments
 
 # ---------------- UTILITY ----------------
 def clean_currency(value):
@@ -25,18 +24,18 @@ def clean_currency(value):
         return value.replace(",", "").replace("₹", "").replace("/-", "").strip()
     return value
 
-def process_file(path, filename):
+def process_file_stream(file_stream, filename):
     ext = os.path.splitext(filename)[1].lower()
     
     if ext == '.csv':
-        df = pd.read_csv(path)
+        df = pd.read_csv(file_stream)
     elif ext == '.xlsx':
-        df = pd.read_excel(path, engine='openpyxl')
+        df = pd.read_excel(file_stream, engine='openpyxl')
     elif ext == '.xls':
-        df = pd.read_excel(path, engine='xlrd')
+        df = pd.read_excel(file_stream, engine='xlrd')
     else:
         # Fallback
-        df = pd.read_excel(path) 
+        df = pd.read_excel(file_stream) 
         
     df.columns = df.columns.str.lower()
     
@@ -59,6 +58,7 @@ def process_file(path, filename):
     date_col = get_col(["date", "time", "day"])
 
     # 3. Resolve Amount
+    # ... (Rest of logic remains identical)
     if amt_col:
         df["amount"] = pd.to_numeric(df[amt_col], errors="coerce").fillna(0)
     elif qty_col and rate_col:
@@ -83,11 +83,10 @@ def index():
     if request.method == "POST":
         file = request.files["file"]
         if file and file.filename != "":
-            path = os.path.join(UPLOAD_FOLDER, file.filename)
-            file.save(path)
-
+             # FIX: Do not save to disk (read-only). Process directly from memory.
             try:
-                df, prod_col, qty_col, date_col = process_file(path, file.filename)
+                # Iterate on the stream directly
+                df, prod_col, qty_col, date_col = process_file_stream(file, file.filename)
                 
                 revenue = round(df["amount"].sum(), 2)
                 insights = generate_insights(df, revenue)
@@ -114,7 +113,7 @@ def index():
                     chart_data=chart_data
                 )
             except Exception as e:
-                return render_template("upload.html", error=str(e))
+                return render_template("upload.html", error=f"Processing Error: {str(e)}")
 
     return render_template("upload.html")
 
