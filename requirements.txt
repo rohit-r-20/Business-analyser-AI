@@ -2,3 +2,7 @@ flask
 pandas
 numpy
 openpyxl
+scikit-learn
+reportlab
+xlrd
+gunicorn
