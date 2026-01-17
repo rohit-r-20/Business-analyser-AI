@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from sklearn.linear_model import LinearRegression
 
 def generate_insights(df, revenue):
     """Generates AI-style narrative insights."""
@@ -37,7 +36,7 @@ def generate_insights(df, revenue):
 
 def forecast_sales(df):
     """
-    Predicts next period sales using Linear Regression.
+    Predicts next period sales using Linear Regression (switched to numpy for performance).
     Requires a date column. If no date, uses index as proxy for time.
     """
     if 'amount' not in df.columns:
@@ -59,19 +58,21 @@ def forecast_sales(df):
 
     # Prepare X (Time) and y (Sales)
     # Use index as time proxy
-    y = pd.to_numeric(data['amount'], errors='coerce').fillna(0).values.reshape(-1, 1)
-    X = np.arange(len(y)).reshape(-1, 1) # 0, 1, 2, ...
-    
-    if len(y) < 2:
-        return 0.0
-
     try:
-        model = LinearRegression()
-        model.fit(X, y)
+        y = pd.to_numeric(data['amount'], errors='coerce').fillna(0).values
+        x = np.arange(len(y))  # 0, 1, 2, ...
+        
+        if len(y) < 2:
+            return 0.0
+
+        # Replace sklearn.linear_model.LinearRegression with numpy.polyfit
+        # Degree 1 = Linear (mx + c)
+        slope, intercept = np.polyfit(x, y, 1)
         
         # Predict next step
-        next_index = np.array([[len(y)]])
-        prediction = model.predict(next_index)[0][0]
+        next_index = len(y)
+        prediction = (slope * next_index) + intercept
+        
         return max(0.0, prediction) 
     except:
         return 0.0
