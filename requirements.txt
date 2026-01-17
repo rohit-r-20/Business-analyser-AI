@@ -1,8 +1,7 @@
 flask
 pandas
-numpy
+numpy==1.26.4
 openpyxl
 scikit-learn
 reportlab
 xlrd
-gunicorn
