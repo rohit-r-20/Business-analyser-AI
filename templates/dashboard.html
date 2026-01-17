@@ -103,7 +103,8 @@
             <div class="col-lg-8">
                 <div class="glass-panel p-4">
                     <h4 class="mb-4">Top Performing Products</h4>
-                    <div class="chart-container">
+                    <div class="chart-container" id="chartContainer" data-labels='{{ chart_labels | tojson }}'
+                        data-values='{{ chart_data | tojson }}'>
                         <canvas id="mainChart"></canvas>
                     </div>
                 </div>
@@ -128,8 +129,9 @@
         Chart.defaults.font.family = "'Outfit', sans-serif";
         Chart.defaults.color = '#64748b';
 
-        const labels = {{ chart_labels | tojson }};
-        const data = {{ chart_data | tojson }};
+        const container = document.getElementById('chartContainer');
+        const labels = JSON.parse(container.dataset.labels);
+        const data = JSON.parse(container.dataset.values);
 
         // Bar Chart
         new Chart(document.getElementById('mainChart'), {
@@ -189,6 +191,9 @@
         });
     </script>
 
+    <div class="text-center mt-5 mb-3">
+        <small class="text-muted fw-bold">HOSTED AT: <span class="text-primary">[ INSERT-YOUR-URL-HERE ]</span></small>
+    </div>
 </body>
 
 </html>
