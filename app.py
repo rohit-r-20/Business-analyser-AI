@@ -1,145 +1,137 @@
 from flask import Flask, render_template, request, jsonify, make_response
 import pandas as pd
+import numpy as np
 import os
+import datetime
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from analytics_engine import generate_insights, forecast_sales
 
-# ---------------- BASIC SETUP ----------------
+# ---------------- CONFIGURATION ----------------
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ---------------- UTILITY ----------------
-def detect_column(df, keywords):
+def clean_currency(value):
+    if isinstance(value, str):
+        return value.replace(",", "").replace("₹", "").replace("/-", "").strip()
+    return value
+
+def process_file(path, filename):
+    ext = os.path.splitext(filename)[1].lower()
+    
+    if ext == '.csv':
+        df = pd.read_csv(path)
+    elif ext == '.xlsx':
+        df = pd.read_excel(path, engine='openpyxl')
+    elif ext == '.xls':
+        df = pd.read_excel(path, engine='xlrd')
+    else:
+        # Fallback
+        df = pd.read_excel(path) 
+        
+    df.columns = df.columns.str.lower()
+    
+    # 1. Clean Numeric
     for col in df.columns:
-        for key in keywords:
-            if key in col.lower():
-                return col
-    return None
+        if df[col].dtype == object:
+             df[col] = df[col].apply(clean_currency)
 
-# ---------------- MAIN ROUTE ----------------
-@app.route("/", methods=["GET", "POST"])
-def upload():
-    if request.method == "POST":
-
-        file = request.files["file"]
-        path = os.path.join(UPLOAD_FOLDER, file.filename)
-        file.save(path)
-
-        df = pd.read_excel(path)
-        df.columns = df.columns.str.lower()
-
-        # ---- CLEAN NUMERIC TEXT ----
+    # 2. Detect Columns
+    def get_col(keywords):
         for col in df.columns:
-            df[col] = (
-                df[col]
-                .astype(str)
-                .str.replace(",", "", regex=False)
-                .str.replace("₹", "", regex=False)
-                .str.replace("/-", "", regex=False)
-                .str.strip()
-            )
+            if any(k in col for k in keywords):
+                return col
+        return None
 
-        # ---- DETECT COLUMNS ----
-        product_col = detect_column(df, ["product", "item", "material", "description", "particular"])
-        qty_col = detect_column(df, ["qty", "quantity", "units", "nos"])
-        rate_col = detect_column(df, ["rate", "price"])
-        credit_col = detect_column(df, ["credit"])
+    prod_col = get_col(["product", "item", "description", "particular"])
+    qty_col = get_col(["qty", "quantity", "units", "nos"])
+    rate_col = get_col(["rate", "price"])
+    amt_col = get_col(["amount", "total", "value", "net"])
+    date_col = get_col(["date", "time", "day"])
 
-        amount_col = detect_column(
-            df,
-            ["amount", "total", "value", "net", "bill amount", "invoice amount", "gross", "sales value"]
-        )
-
-        # ---- AMOUNT RESOLUTION ----
-        if amount_col:
-            df["amount"] = pd.to_numeric(df[amount_col], errors="coerce")
-
-        elif credit_col:
-            df["amount"] = pd.to_numeric(df[credit_col], errors="coerce")
-
-        elif qty_col and rate_col:
-            df["amount"] = (
-                pd.to_numeric(df[qty_col], errors="coerce") *
-                pd.to_numeric(df[rate_col], errors="coerce")
-            )
-
+    # 3. Resolve Amount
+    if amt_col:
+        df["amount"] = pd.to_numeric(df[amt_col], errors="coerce").fillna(0)
+    elif qty_col and rate_col:
+        df["amount"] = (pd.to_numeric(df[qty_col], errors="coerce") * pd.to_numeric(df[rate_col], errors="coerce")).fillna(0)
+    else:
+        numeric_cols = df.select_dtypes(include=[np.number])
+        if not numeric_cols.empty:
+            df["amount"] = numeric_cols.sum(axis=1)
         else:
-            numeric_cols = df.apply(pd.to_numeric, errors="coerce")
-            likely_amount_col = numeric_cols.sum().idxmax()
-            df["amount"] = numeric_cols[likely_amount_col]
+             df["amount"] = 0
 
-        df["amount"] = df["amount"].fillna(0)
+    if not prod_col:
+        df["product"] = "Unknown Item"
+        prod_col = "product"
+    
+    return df, prod_col, qty_col, date_col
 
-        # ---- METRICS ----
-        revenue = round(df["amount"].sum(), 2)
+# ---------------- ROUTES ----------------
 
-        if product_col:
-            sales_by_product = df.groupby(product_col)["amount"].sum().to_dict()
-            quantity_by_product = (
-                df.groupby(product_col)[qty_col].sum().to_dict()
-                if qty_col else {}
-            )
-        else:
-            sales_by_product = {"Overall Sales": revenue}
-            quantity_by_product = {}
+@app.route("/", methods=["GET", "POST"])
+def index():
+    if request.method == "POST":
+        file = request.files["file"]
+        if file and file.filename != "":
+            path = os.path.join(UPLOAD_FOLDER, file.filename)
+            file.save(path)
 
-        insights = [
-            f"Total revenue is ₹{revenue}",
-            "Focus on high-value products",
-            "Improve slow-moving items"
-        ]
+            try:
+                df, prod_col, qty_col, date_col = process_file(path, file.filename)
+                
+                revenue = round(df["amount"].sum(), 2)
+                insights = generate_insights(df, revenue)
+                forecast = forecast_sales(df) or 0
+                
+                sales_by_product = df.groupby(prod_col)["amount"].sum().sort_values(ascending=False).to_dict()
+                
+                quantity_by_product = {}
+                if qty_col:
+                    quantity_by_product = df.groupby(prod_col)[qty_col].sum().sort_values(ascending=False).to_dict()
+                
+                # Format for charts
+                chart_labels = list(sales_by_product.keys())[:10]
+                chart_data = list(sales_by_product.values())[:10]
 
-        return render_template(
-            "dashboard.html",
-            revenue=revenue,
-            sales_by_product=sales_by_product,
-            quantity_by_product=quantity_by_product,
-            insights=insights
-        )
+                return render_template(
+                    "dashboard.html",
+                    revenue=revenue,
+                    sales_by_product=sales_by_product,
+                    quantity_by_product=quantity_by_product,
+                    insights=insights,
+                    forecast=round(forecast, 2),
+                    chart_labels=chart_labels,
+                    chart_data=chart_data
+                )
+            except Exception as e:
+                return render_template("upload.html", error=str(e))
 
     return render_template("upload.html")
 
-# ---------------- PDF DOWNLOAD (REPORTLAB) ----------------
 @app.route("/download-pdf", methods=["POST"])
 def download_pdf():
-
     revenue = request.form.get("revenue")
-
     buffer = BytesIO()
-    pdf = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
-
-    y = height - 50
-    pdf.setFont("Helvetica-Bold", 16)
-    pdf.drawString(50, y, "Business Analytics Report")
-
-    y -= 40
-    pdf.setFont("Helvetica", 12)
-    pdf.drawString(50, y, f"Total Revenue: ₹ {revenue}")
-
-    y -= 30
-    pdf.drawString(50, y, "Key Insights:")
-
-    y -= 20
-    pdf.drawString(70, y, "- Focus on high-performing products")
-    y -= 20
-    pdf.drawString(70, y, "- Improve slow-moving items")
-    y -= 20
-    pdf.drawString(70, y, "- Monitor revenue trends regularly")
-
-    pdf.showPage()
-    pdf.save()
-
+    p = canvas.Canvas(buffer, pagesize=A4)
+    p.setFont("Helvetica-Bold", 20)
+    p.drawString(50, 800, "Executive Business Report")
+    
+    p.setFont("Helvetica", 12)
+    p.drawString(50, 770, f"Generated on: {datetime.datetime.now().strftime('%Y-%m-%d')}")
+    p.drawString(50, 750, f"Total Revenue: {revenue}")
+    
+    p.showPage()
+    p.save()
     buffer.seek(0)
-
+    
     response = make_response(buffer.read())
     response.headers["Content-Type"] = "application/pdf"
-    response.headers["Content-Disposition"] = "attachment; filename=Business_Report.pdf"
-
+    response.headers["Content-Disposition"] = "attachment; filename=Report.pdf"
     return response
 
-# ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,218 +1,190 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Business Analytics Dashboard</title>
-
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Dashboard</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap Grid -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap-grid.min.css" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <style>
-        @media (max-width: 768px) {
-            h2 { font-size: 1.4rem; }
-            h3 { font-size: 1.3rem; }
-            h6 { font-size: 0.9rem; }
-        }
-    </style>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
-<body class="bg-light">
+<body>
 
-<div class="container-fluid p-3">
+    <div class="container-fluid p-4">
 
-    <h2 class="text-center mb-3">📊 Business Analytics Dashboard</h2>
-
-    <!-- KPI + DOWNLOAD -->
-    <div class="row mb-3 align-items-center">
-
-        <div class="col-12 col-md-3 mb-2">
-            <div class="card text-center shadow-sm">
-                <div class="card-body">
-                    <h6>Total Revenue</h6>
-                    <h3 class="text-success">₹ {{ revenue }}</h3>
+        <!-- Header -->
+        <header class="d-flex justify-content-between align-items-center mb-5 fade-in-up">
+            <div class="d-flex align-items-center gap-3">
+                <a href="/" class="glass-card p-2 text-dark"><i class="fas fa-arrow-left"></i></a>
+                <div>
+                    <h2 class="m-0">Overview Dashboard</h2>
+                    <small class="text-muted">Real-time business intelligence</small>
                 </div>
             </div>
-        </div>
 
-        <div class="col-12 col-md-3 mb-2">
-            <button onclick="downloadPDFWithCharts()"
-                    class="btn btn-outline-dark w-100">
-                ⬇ Download Report (PDF)
-            </button>
-        </div>
+            <form action="/download-pdf" method="post">
+                <input type="hidden" name="revenue" value="{{ revenue }}">
+                <button class="btn-primary-glow">
+                    <i class="fas fa-download me-2"></i> Export Report
+                </button>
+            </form>
+        </header>
 
-    </div>
-
-    <!-- FILTERS + CHART SELECTOR -->
-    <div class="card shadow-sm p-3 mb-3">
-        <div class="row g-3">
-
-            <div class="col-12 col-md-4">
-                <label class="fw-bold">Product Filter</label>
-                <select id="productFilter" class="form-select" onchange="applyFilter()">
-                    <option value="All">All Products</option>
-                </select>
-            </div>
-
-            <div class="col-12 col-md-8">
-                <label class="fw-bold">Show Charts</label>
-                <div class="d-flex flex-wrap gap-3 mt-1">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" checked onchange="toggleChart('barBox')">
-                        <label class="form-check-label">Bar</label>
+        <!-- KPI Cards -->
+        <div class="row g-4 mb-5 fade-in-up" style="animation-delay: 0.1s;">
+            <!-- Revenue -->
+            <div class="col-md-4">
+                <div class="glass-panel p-4 h-100 position-relative overflow-hidden">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <p class="text-muted text-uppercase small fw-bold mb-1">Total Revenue</p>
+                            <h2 class="text-gradient display-5">₹{{ "{:,.2f}".format(revenue) }}</h2>
+                        </div>
+                        <div class="p-3 rounded-circle bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-wallet fa-lg"></i>
+                        </div>
                     </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" checked onchange="toggleChart('pieBox')">
-                        <label class="form-check-label">Pie</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" checked onchange="toggleChart('lineBox')">
-                        <label class="form-check-label">Line</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" checked onchange="toggleChart('histBox')">
-                        <label class="form-check-label">Histogram</label>
+                    <div class="d-flex align-items-center text-success small">
+                        <i class="fas fa-arrow-up me-1"></i> Data Processed Successfully
                     </div>
                 </div>
             </div>
 
+            <!-- Predict -->
+            <div class="col-md-4">
+                <div class="glass-panel p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <p class="text-muted text-uppercase small fw-bold mb-1">AI Forecast (Next Month)</p>
+                            <h2 class="text-primary display-5">₹{{ "{:,.2f}".format(forecast) }}</h2>
+                            <small class="text-muted">Based on linear trend projection</small>
+                        </div>
+                        <div class="p-3 rounded-circle bg-info bg-opacity-10 text-info">
+                            <i class="fas fa-robot fa-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insights -->
+            <div class="col-md-4">
+                <div class="glass-panel p-4 h-100">
+                    <p class="text-muted text-uppercase small fw-bold mb-3"><i
+                            class="fas fa-lightbulb text-warning me-2"></i>Smart AI Insights</p>
+                    <div style="max-height: 120px; overflow-y: auto;">
+                        <ul class="list-unstyled mb-0">
+                            {% for insight in insights %}
+                            <li class="mb-3 d-flex align-items-start text-sm">
+                                <i class="fas fa-check-circle text-success mt-1 me-2" style="font-size: 0.8rem;"></i>
+                                <span class="text-main opacity-75" style="font-size: 0.9rem;">{{ insight }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- Charts Area -->
+        <div class="row g-4 fade-in-up" style="animation-delay: 0.2s;">
+            <div class="col-lg-8">
+                <div class="glass-panel p-4">
+                    <h4 class="mb-4">Top Performing Products</h4>
+                    <div class="chart-container">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="glass-panel p-4 h-100">
+                    <h4 class="mb-4">Distribution</h4>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="doughnutChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <small class="text-muted">Revenue distribution by top categories</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- CHARTS -->
-    <div class="row g-3">
+    <script>
+        // Chart Config
+        Chart.defaults.font.family = "'Outfit', sans-serif";
+        Chart.defaults.color = '#64748b';
 
-        <div class="col-12 col-md-6" id="barBox">
-            <div class="card shadow-sm p-3">
-                <h6 class="text-center">Quantity by Product</h6>
-                <canvas id="barChart"></canvas>
-            </div>
-        </div>
+        const labels = {{ chart_labels | tojson }};
+        const data = {{ chart_data | tojson }};
 
-        <div class="col-12 col-md-6" id="pieBox">
-            <div class="card shadow-sm p-3">
-                <h6 class="text-center">Revenue Share</h6>
-                <canvas id="pieChart"></canvas>
-            </div>
-        </div>
+        // Bar Chart
+        new Chart(document.getElementById('mainChart'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Revenue',
+                    data: data,
+                    backgroundColor: '#4f46e5',
+                    borderRadius: 8,
+                    barThickness: 30
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        grid: { color: 'rgba(0,0,0,0.05)', borderDash: [5, 5] },
+                        border: { display: false }
+                    },
+                    x: {
+                        grid: { display: false },
+                        border: { display: false }
+                    }
+                },
+                animation: {
+                    y: { duration: 2000, easing: 'easeOutQuart' }
+                }
+            }
+        });
 
-        <div class="col-12 col-md-6" id="lineBox">
-            <div class="card shadow-sm p-3">
-                <h6 class="text-center">Sales Trend</h6>
-                <canvas id="lineChart"></canvas>
-            </div>
-        </div>
-
-        <div class="col-12 col-md-6" id="histBox">
-            <div class="card shadow-sm p-3">
-                <h6 class="text-center">Sales Distribution</h6>
-                <canvas id="histChart"></canvas>
-            </div>
-        </div>
-
-    </div>
-
-</div>
-
-<script>
-const salesData = {{ sales_by_product | tojson }};
-const quantityData = {{ quantity_by_product | tojson }};
-
-let barChart, pieChart, lineChart, histChart;
-
-// Populate filter
-const productFilter = document.getElementById("productFilter");
-Object.keys(salesData).forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p;
-    opt.text = p;
-    productFilter.add(opt);
-});
-
-function toggleChart(id) {
-    const el = document.getElementById(id);
-    el.style.display = el.style.display === "none" ? "block" : "none";
-}
-
-function applyFilter() {
-    const selected = productFilter.value;
-
-    if (selected === "All") {
-        updateCharts(salesData, quantityData);
-    } else {
-        updateCharts(
-            { [selected]: salesData[selected] },
-            { [selected]: quantityData[selected] }
-        );
-    }
-}
-
-function updateCharts(sales, qty) {
-    const labels = Object.keys(qty);
-    const qtyValues = Object.values(qty);
-    const salesValues = Object.values(sales);
-
-    barChart?.destroy();
-    pieChart?.destroy();
-    lineChart?.destroy();
-    histChart?.destroy();
-
-    barChart = new Chart(barChartEl, {
-        type: "bar",
-        data: { labels, datasets: [{ data: qtyValues, backgroundColor:"#0d6efd" }] }
-    });
-
-    pieChart = new Chart(pieChartEl, {
-        type: "pie",
-        data: { labels, datasets: [{ data: salesValues, backgroundColor:["#0d6efd","#198754","#ffc107","#dc3545"] }] }
-    });
-
-    lineChart = new Chart(lineChartEl, {
-        type: "line",
-        data: { labels, datasets: [{ data: qtyValues, borderColor:"#198754", tension:0.3 }] }
-    });
-
-    histChart = new Chart(histChartEl, {
-        type: "bar",
-        data: { labels, datasets: [{ data: salesValues, backgroundColor:"#ffc107" }] }
-    });
-}
-
-// Chart references
-const barChartEl = document.getElementById("barChart");
-const pieChartEl = document.getElementById("pieChart");
-const lineChartEl = document.getElementById("lineChart");
-const histChartEl = document.getElementById("histChart");
-
-updateCharts(salesData, quantityData);
-
-// PDF EXPORT
-function downloadPDFWithCharts() {
-    const charts = [barChart, pieChart, lineChart, histChart];
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = "/download-pdf";
-
-    charts.forEach((c, i) => {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = "chart" + i;
-        input.value = c.toBase64Image();
-        form.appendChild(input);
-    });
-
-    const rev = document.createElement("input");
-    rev.type = "hidden";
-    rev.name = "revenue";
-    rev.value = "{{ revenue }}";
-    form.appendChild(rev);
-
-    document.body.appendChild(form);
-    form.submit();
-}
-</script>
+        // Doughnut Chart
+        new Chart(document.getElementById('doughnutChart'), {
+            type: 'doughnut',
+            data: {
+                labels: labels.slice(0, 4),
+                datasets: [{
+                    data: data.slice(0, 4),
+                    backgroundColor: ['#4f46e5', '#ec4899', '#8b5cf6', '#06b6d4'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                },
+                cutout: '75%',
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                }
+            }
+        });
+    </script>
 
 </body>
+
 </html>
