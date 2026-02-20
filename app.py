@@ -13,8 +13,14 @@ from io import BytesIO
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import google.generativeai as genai
 
 load_dotenv()
+
+# Configure Gemini
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 # ReportLab imports for advanced PDF
 from reportlab.lib.pagesizes import A4
@@ -422,23 +428,56 @@ def download_report():
 
 # ---------------- AI CHAT ASSISTANT LOGIC ----------------
 def generate_chat_response(question, data):
-    q = question.lower()
-    if not data:
-        return "Please upload and analyze a dataset first so I can help you with specific insights."
-    
-    if "revenue" in q or "sales" in q:
-        return f"The total revenue generated is ₹{data['kpis']['total_revenue']:,}. This is based on all processed transactions."
-    elif "forecast" in q or "predict" in q:
-        return f"Based on the current trend, our AI model forecasts sales for the next period to be approximately ₹{data['forecast']:,}."
-    elif "top product" in q or "best seller" in q:
-        return f"The top performing product is '{data['top_product']}', which has the highest revenue contribution in your dataset."
-    elif "insights" in q or "summary" in q:
-        summary = " ".join(data['insights'][:2])
-        return f"Here is a quick summary of the AI insights: {summary}"
-    elif "hello" in q or "hi" in q:
-        return "Hello! I'm your BizAnalyzer AI Assistant. You can ask me about your revenue, forecasts, top products, or general insights."
-    else:
-        return "I'm not quite sure about that. Try asking about 'revenue', 'forecast', 'top product', or 'AI insights'."
+    if not GEMINI_API_KEY:
+        # Fallback to simple logic if no API key
+        q = question.lower()
+        if not data:
+            return "Please upload and analyze a dataset first so I can help you with specific insights."
+        
+        if "revenue" in q or "sales" in q:
+            return f"The total revenue generated is ₹{data['kpis']['total_revenue']:,}. This is based on all processed transactions."
+        elif "forecast" in q or "predict" in q:
+            return f"Based on the current trend, our AI model forecasts sales for the next period to be approximately ₹{data['forecast']:,}."
+        elif "top product" in q or "best seller" in q:
+            return f"The top performing product is '{data['top_product']}', which has the highest revenue contribution in your dataset."
+        elif "hello" in q or "hi" in q:
+            return "Hello! I'm your AI Business Assistant. Since I don't have my advanced brain (Gemini) active yet, I can only answer specific questions about your data like revenue or forecasts. Add a GEMINI_API_KEY to see what I can really do!"
+        else:
+            return "I'm not quite sure about that. Try asking about 'revenue', 'forecast', or 'top product'."
+
+    # Advanced Gemini Logic
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Prepare context from analysis data
+        context = ""
+        if data:
+            context = f"""
+            You are a brilliant Business Intelligence AI Assistant. 
+            You have access to the following business data analysis:
+            - Total Revenue: ₹{data['kpis']['total_revenue']:,}
+            - Total Orders: {data['kpis']['total_orders']}
+            - Average Order Value: ₹{data['kpis']['avg_order_value']:,}
+            - Unique Products: {data['kpis']['unique_products']}
+            - AI Sales Forecast: ₹{data['forecast']:,}
+            - Top Performing Product: {data['top_product']}
+            - Strategic Insights: {', '.join(data['insights'])}
+
+            Instructions:
+            1. Be professional, friendly, and analytical.
+            2. If the user asks about the data, use the specific numbers above.
+            3. You can also talk about general business strategy, marketing, or general topics (like a human), but always try to pivot back to how it might help their business.
+            4. Keep responses concise and insightful.
+            """
+        else:
+            context = "You are a friendly AI Business Assistant. The user hasn't uploaded any data yet, so encourage them to upload a file for analysis, but you can still chat about business strategies or general topics."
+
+        prompt = f"{context}\n\nUser Question: {question}\nAI Response:"
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        print(f"Gemini Error: {e}")
+        return "I'm having trouble connecting to my advanced AI engine right now. Let me know if there's anything else you need!"
 
 @app.route("/chat", methods=["GET", "POST"])
 def chat():
