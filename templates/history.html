@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload History | BizAnalyzer AI</title>
+    <title>Intelligence Archive | History</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,237 +14,197 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
-        :root {
-            --sidebar-width: 260px;
-            --primary-bg: #f4f7fe;
-            --sidebar-bg: #ffffff;
-            --accent: #4318ff;
-            --header-text: #1b2559;
-            --body-text: #a3aed0;
-            --card-bg: #ffffff;
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--primary-bg);
-            color: var(--body-text);
-            margin: 0;
-            overflow-x: hidden;
-        }
-
-        /* Sidebar Styling (Duplicate from dashboard for consistency) */
-        .sidebar {
-            width: var(--sidebar-width);
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            background: var(--sidebar-bg);
-            border-right: 1px solid #f2f4f7;
-            z-index: 1000;
-            padding: 2rem 1.5rem;
-        }
-
-        .sidebar-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 3rem;
-        }
-
-        .brand-logo {
-            width: 32px;
-            height: 32px;
-            background: var(--accent);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-
-        .brand-name {
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: var(--header-text);
-            letter-spacing: -1px;
-        }
-
-        .nav-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0.75rem 1rem;
-            text-decoration: none;
-            color: var(--body-text);
-            border-radius: 12px;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-
-        .nav-link:hover {
-            background: var(--primary-bg);
-            color: var(--header-text);
-        }
-
-        .nav-link.active {
-            background: rgba(67, 24, 255, 0.1);
-            color: var(--accent);
-        }
-
         .main-container {
             margin-left: var(--sidebar-width);
-            padding: 2rem;
+            padding: 3rem;
+            min-height: 100vh;
         }
 
-        .page-title {
-            color: var(--header-text);
-            font-weight: 700;
-            font-size: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .history-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        }
-
-        .table {
-            color: var(--header-text);
-            vertical-align: middle;
+        .archive-card {
+            background: white;
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 40px rgba(112, 144, 176, 0.08);
+            border: 1px solid rgba(226, 232, 240, 0.5);
         }
 
         .table thead th {
-            border-top: none;
-            color: var(--body-text);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            background: #f8fafc;
+            color: #64748b;
             font-weight: 700;
-            padding-bottom: 1.5rem;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            padding: 1.25rem;
+            border: none;
         }
 
-        .file-icon {
-            width: 40px;
-            height: 40px;
-            background: #f4f7fe;
-            border-radius: 10px;
+        .table td {
+            padding: 1.25rem;
+            vertical-align: middle;
+            color: #1b2559;
+            font-weight: 600;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .file-icon-box {
+            width: 45px;
+            height: 45px;
+            background: rgba(67, 24, 255, 0.05);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--accent);
+            color: #4318ff;
+            font-size: 1.2rem;
         }
 
-        .btn-view {
-            background: var(--accent);
-            color: white;
-            border-radius: 10px;
-            font-weight: 600;
+        .btn-action {
+            padding: 0.6rem 1.2rem;
+            border-radius: 12px;
+            font-weight: 700;
             font-size: 0.85rem;
-            padding: 0.5rem 1rem;
-            border: none;
-            transition: 0.2s;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
         }
 
-        .btn-view:hover {
-            opacity: 0.9;
+        .btn-merge {
+            background: linear-gradient(135deg, #4318ff, #707eff);
             color: white;
+            border: none;
+        }
+
+        .btn-merge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(67, 24, 255, 0.25);
+            color: white;
+        }
+
+        .selection-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #4318ff;
         }
     </style>
 </head>
 
 <body>
+    <div class="dashboard-bg"></div>
 
+    <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="sidebar-brand">
-            <div class="brand-logo"><i class="fas fa-bolt"></i></div>
-            <span class="brand-name">BizAnalyzer AI</span>
+        <div class="sidebar-header d-flex align-items-center">
+            <div class="sidebar-logo">
+                <i class="fas fa-chart-line text-white"></i>
+            </div>
+            <span class="fw-extrabold fs-4 tracking-tight ms-3" style="color: var(--slate-800);">BizAI</span>
         </div>
-
-        <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="/" class="nav-link">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
+        <nav class="sidebar-nav p-4">
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-columns"></i> Dashboard
+            </a>
+            <a href="/" class="nav-link">
+                <i class="fas fa-upload"></i> Analyze New
+            </a>
+            <a href="/history" class="nav-link active">
+                <i class="fas fa-history"></i> History
+            </a>
+            <a href="/chat" class="nav-link">
+                <i class="fas fa-robot"></i> AI Assistant
+            </a>
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-file-invoice"></i> Reports
+            </a>
+            <div class="mt-auto px-2 pb-4" style="position: absolute; bottom: 0; width: 85%;">
+                <a href="/logout" class="nav-link text-danger">
+                    <i class="fas fa-power-off"></i> Logout
                 </a>
-            </li>
-            <li class="nav-item">
-                <a href="/" class="nav-link">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <span>Upload Data</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/history" class="nav-link active">
-                    <i class="fas fa-history"></i>
-                    <span>History</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-file-invoice"></i>
-                    <span>Reports</span>
-                </a>
-            </li>
-        </ul>
+            </div>
+        </nav>
     </aside>
 
     <main class="main-container">
-        <h1 class="page-title">Upload History</h1>
-
-        <div class="history-card">
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>File Name</th>
-                            <th>Upload Date</th>
-                            <th class="text-end">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in history %}
-                        <tr>
-                            <td>
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="file-icon">
-                                        <i class="fas fa-file-csv"></i>
-                                    </div>
-                                    <span class="fw-bold">{{ item.file_name }}</span>
-                                </div>
-                            </td>
-                            <td>{{ item.upload_time }}</td>
-                            <td class="text-end">
-                                <button class="btn-view">View Analysis</button>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="3" class="text-center py-5">
-                                <p class="mb-0">No upload history found.</p>
-                                <a href="/" class="text-accent fw-bold text-decoration-none small">Upload your first
-                                    file</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <div>
+                <h1 class="fw-extrabold mb-1" style="color: #1b2559;">📊 Intelligence Archive</h1>
+                <p class="text-muted fw-medium mb-0">Review past analyzes or merge multiple data sources for broader
+                    insights.</p>
             </div>
+            <button type="submit" form="historyForm" class="btn btn-action btn-merge">
+                <i class="fas fa-layer-group me-2"></i> Merge & Analyze Selected
+            </button>
+        </div>
+
+        <div class="archive-card">
+            <form id="historyForm" action="/history/merge" method="POST">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">
+                                    <input type="checkbox" id="selectAll" class="selection-checkbox">
+                                </th>
+                                <th>Source Asset</th>
+                                <th>Timestamp</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in history %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" name="selected_history" value="{{ item.id }}"
+                                        class="selection-checkbox item-checkbox">
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="file-icon-box">
+                                            <i class="fas fa-file-alt"></i>
+                                        </div>
+                                        <div>
+                                            <div class="mb-0">{{ item.file_name }}</div>
+                                            <span class="badge bg-light text-primary small">Processed</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small fw-bold text-muted">{{ item.upload_time }}</div>
+                                </td>
+                                <td class="text-end">
+                                    <a href="/history/view/{{ item.id }}"
+                                        class="btn btn-action btn-light border fw-bold text-primary">
+                                        <i class="fas fa-chart-pie me-2"></i> View Analysis
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5">
+                                    <div class="mb-3"><i class="fas fa-folder-open fa-3x opacity-10"></i></div>
+                                    <p class="h5 fw-bold text-slate-400">Your archive is currently empty</p>
+                                    <a href="/" class="btn btn-primary rounded-pill mt-3 px-4">Upload First Dataset</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
         </div>
     </main>
 
+    <script>
+        document.getElementById('selectAll').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+        });
+    </script>
 </body>
 
 </html>

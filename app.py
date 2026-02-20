@@ -81,9 +81,15 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER,
                 file_name TEXT,
+                file_data BLOB,
                 upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        # Migration: add file_data if it doesn't exist
+        try:
+            conn.execute('ALTER TABLE upload_history ADD COLUMN file_data BLOB')
+        except sqlite3.OperationalError:
+            pass
         conn.commit()
         conn.close()
     except Exception as e:
@@ -171,10 +177,13 @@ def dashboard():
                 # SAVE HISTORY: Insert record into upload_history
                 # Use session['user_id'] if available, else a default (for safety without full auth context)
                 curr_user_id = session.get('user_id', 1) 
+                # Read file content for storage
+                file.seek(0)
+                file_bytes = file.read()
                 try:
                     conn = get_db_connection()
-                    conn.execute('INSERT INTO upload_history (user_id, file_name) VALUES (?, ?)',
-                                (curr_user_id, file.filename))
+                    conn.execute('INSERT INTO upload_history (user_id, file_name, file_data) VALUES (?, ?, ?)',
+                                (curr_user_id, file.filename, file_bytes))
                     conn.commit()
                     conn.close()
                 except Exception as db_err:
@@ -449,11 +458,87 @@ def history():
     user_id = session.get('user_id', 1) # Default to 1 if not logged in (minimal logic)
     
     conn = get_db_connection()
-    history_data = conn.execute('SELECT file_name, upload_time FROM upload_history WHERE user_id = ? ORDER BY upload_time DESC',
+    history_data = conn.execute('SELECT id, file_name, upload_time FROM upload_history WHERE user_id = ? ORDER BY upload_time DESC',
                                 (user_id,)).fetchall()
     conn.close()
     
     return render_template("history.html", history=history_data)
+
+@app.route("/history/view/<int:history_id>")
+def view_history_item(history_id):
+    user_id = session.get('user_id', 1)
+    conn = get_db_connection()
+    item = conn.execute('SELECT file_name, file_data FROM upload_history WHERE id = ? AND user_id = ?', 
+                        (history_id, user_id)).fetchone()
+    conn.close()
+    
+    if not item or not item['file_data']:
+        return "Analysis data not found for this record.", 404
+        
+    # Re-analyze from stored bytes
+    file_stream = BytesIO(item['file_data'])
+    df, _, _, _ = process_file_stream(file_stream, item['file_name'])
+    data = generate_dashboard_data(df)
+    
+    chart_labels = list(data['sales_by_product'].keys())[:10]
+    chart_data = list(data['sales_by_product'].values())[:10]
+    
+    return render_template(
+        "dashboard.html",
+        kpis=data, # generate_dashboard_data returns all KPIs
+        charts={
+            "sales_by_product": data["sales_by_product"],
+            "sales_trend": data["sales_trend"]
+        },
+        forecast=round(data["next_sales_prediction"], 2),
+        insights=data["insights"],
+        revenue=data["total_revenue"],
+        chart_labels=chart_labels,
+        chart_data=chart_data
+    )
+
+@app.route("/history/merge", methods=["POST"])
+def merge_history():
+    selected_ids = request.form.getlist("selected_history")
+    if not selected_ids:
+        return redirect(url_for("history"))
+        
+    user_id = session.get('user_id', 1)
+    all_dfs = []
+    
+    conn = get_db_connection()
+    for sid in selected_ids:
+        item = conn.execute('SELECT file_name, file_data FROM upload_history WHERE id = ? AND user_id = ?', 
+                            (sid, user_id)).fetchone()
+        if item and item['file_data']:
+            file_stream = BytesIO(item['file_data'])
+            df, _, _, _ = process_file_stream(file_stream, item['file_name'])
+            all_dfs.append(df)
+    conn.close()
+    
+    if not all_dfs:
+        return "No valid data found to merge.", 400
+        
+    # Merge all DataFrames
+    merged_df = pd.concat(all_dfs, ignore_index=True)
+    data = generate_dashboard_data(merged_df)
+    
+    chart_labels = list(data['sales_by_product'].keys())[:10]
+    chart_data = list(data['sales_by_product'].values())[:10]
+    
+    return render_template(
+        "dashboard.html",
+        kpis=data,
+        charts={
+            "sales_by_product": data["sales_by_product"],
+            "sales_trend": data["sales_trend"]
+        },
+        forecast=round(data["next_sales_prediction"], 2),
+        insights=data["insights"],
+        revenue=data["total_revenue"],
+        chart_labels=chart_labels,
+        chart_data=chart_data
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
