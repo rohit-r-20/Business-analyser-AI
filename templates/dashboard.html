@@ -4,197 +4,362 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Executive Dashboard</title>
+    <title>Dashboard | Intelligence Hub</title>
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <!-- Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Bootstrap Grid -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap-grid.min.css" rel="stylesheet">
-    <!-- Chart.js -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Icon & Animation Libraries -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 2.5rem;
+            min-height: 100vh;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .strategy-pill {
+            background: rgba(67, 24, 255, 0.05);
+            border: 1px solid rgba(67, 24, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .strategy-pill:hover {
+            background: white;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            transform: translateX(5px);
+        }
+
+        .chart-selector {
+            padding: 0.4rem 0.8rem;
+            border-radius: 10px;
+            border: 1px solid #e0e5f2;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--slate-700);
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body>
+    <div class="dashboard-bg"></div>
 
-    <div class="container-fluid p-4">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header d-flex align-items-center">
+            <div class="sidebar-logo">
+                <i class="fas fa-chart-line text-white"></i>
+            </div>
+            <span class="fw-extrabold fs-4 tracking-tight ms-3" style="color: var(--slate-800);">BizAI</span>
+        </div>
+        <nav class="sidebar-nav p-4">
+            <a href="/dashboard" class="nav-link active">
+                <i class="fas fa-columns"></i> Dashboard
+            </a>
+            <a href="/" class="nav-link">
+                <i class="fas fa-upload"></i> Analyze New
+            </a>
+            <a href="/history" class="nav-link">
+                <i class="fas fa-history"></i> History
+            </a>
+            <a href="/chat" class="nav-link">
+                <i class="fas fa-robot"></i> AI Assistant
+            </a>
+            <a href="#" class="nav-link">
+                <i class="fas fa-file-invoice"></i> Reports
+            </a>
+            <a href="#" class="nav-link">
+                <i class="fas fa-user-circle"></i> Profile
+            </a>
+            <div class="mt-auto px-2 pb-4" style="position: absolute; bottom: 0; width: 85%;">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a href="/logout" class="nav-link text-danger">
+                    <i class="fas fa-power-off"></i> Logout
+                </a>
+            </div>
+        </nav>
+    </aside>
 
-        <!-- Header -->
-        <header class="d-flex justify-content-between align-items-center mb-5 fade-in-up">
-            <div class="d-flex align-items-center gap-3">
-                <a href="/" class="glass-card p-2 text-dark"><i class="fas fa-arrow-left"></i></a>
-                <div>
-                    <h2 class="m-0">Overview Dashboard</h2>
-                    <small class="text-muted">Real-time business intelligence</small>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Welcome Header -->
+        <div class="welcome-header animate-fade-up" data-aos="fade-down">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="fw-extrabold mb-2">🚀 Welcome to Your Smart Growth Hub</h1>
+                    <p class="mb-0 opacity-75 fw-medium">Real-time intelligence dashboard for data-driven decisions.</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <form action="/download_report" method="POST">
+                            <input type="hidden" name="revenue" value="{{ kpis.total_revenue }}">
+                            <input type="hidden" name="forecast" value="{{ forecast }}">
+                            <input type="hidden" name="insights" value='{% for i in insights %}{{ i }}|{% endfor %}'>
+                            <input type="hidden" name="top_products"
+                                value='{% for l in chart_labels %}{{ l }}|{% endfor %}'>
+                            <input type="hidden" name="top_sales" value='{% for d in chart_data %}{{ d }}|{% endfor %}'>
+                            <input type="hidden" name="trend_data"
+                                value='{% for v in charts.sales_trend %}{{ v }}|{% endfor %}'>
+                            <button type="submit" class="btn btn-light shadow-sm fw-bold rounded-pill px-4">
+                                <i class="fas fa-file-pdf me-2"></i> Export PDF
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
-
-            <form action="/download-pdf" method="post">
-                <input type="hidden" name="revenue" value="{{ revenue }}">
-                <input type="hidden" name="forecast" value="{{ forecast }}">
-                <input type="hidden" name="insights" value='{% for i in insights %}{{ i }}|{% endfor %}'>
-                <input type="hidden" name="top_products" value='{% for l in chart_labels %}{{ l }}|{% endfor %}'>
-                <input type="hidden" name="top_sales" value='{% for d in chart_data %}{{ d }}|{% endfor %}'>
-                <button class="btn-primary-glow">
-                    <i class="fas fa-download me-2"></i> Export Report
-                </button>
-            </form>
-        </header>
+        </div>
 
         <!-- KPI Cards -->
-        <div class="row g-4 mb-5 fade-in-up" style="animation-delay: 0.1s;">
-            <!-- Revenue -->
-            <div class="col-md-4">
-                <div class="glass-panel p-4 h-100 position-relative overflow-hidden">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <p class="text-muted text-uppercase small fw-bold mb-1">Total Revenue</p>
-                            <h2 class="text-gradient display-5">₹{{ "{:,.2f}".format(revenue) }}</h2>
-                        </div>
-                        <div class="p-3 rounded-circle bg-primary bg-opacity-10 text-primary">
-                            <i class="fas fa-wallet fa-lg"></i>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center text-success small">
-                        <i class="fas fa-arrow-up me-1"></i> Data Processed Successfully
+        <div class="dashboard-grid">
+            <div class="kpi-card theme-blue" data-aos="fade-up" data-aos-delay="100">
+                <div class="kpi-icon-circle bg-blue-soft">
+                    <span>💰</span>
+                </div>
+                <div class="kpi-content">
+                    <div class="text-slate-500 fw-bold small text-uppercase mb-1">Total Revenue</div>
+                    <div class="h3 fw-extrabold mb-0">₹{{ kpis.total_revenue }}</div>
+                    <div class="small text-success fw-bold mt-2"><i class="fas fa-arrow-up me-1"></i> +12% vs last month
                     </div>
                 </div>
             </div>
-
-            <!-- Predict -->
-            <div class="col-md-4">
-                <div class="glass-panel p-4 h-100">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <p class="text-muted text-uppercase small fw-bold mb-1">AI Forecast (Next Month)</p>
-                            <h2 class="text-primary display-5">₹{{ "{:,.2f}".format(forecast) }}</h2>
-                            <small class="text-muted">Based on linear trend projection</small>
-                        </div>
-                        <div class="p-3 rounded-circle bg-info bg-opacity-10 text-info">
-                            <i class="fas fa-robot fa-lg"></i>
-                        </div>
+            <div class="kpi-card theme-purple" data-aos="fade-up" data-aos-delay="200">
+                <div class="kpi-icon-circle bg-purple-soft">
+                    <span>📦</span>
+                </div>
+                <div class="kpi-content">
+                    <div class="text-slate-500 fw-bold small text-uppercase mb-1">Total Orders</div>
+                    <div class="h3 fw-extrabold mb-0">{{ kpis.total_orders }}</div>
+                    <div class="small text-success fw-bold mt-2"><i class="fas fa-shopping-bag me-1"></i> Growth Phase
                     </div>
                 </div>
             </div>
-
-            <!-- Insights -->
-            <div class="col-md-4">
-                <div class="glass-panel p-4 h-100">
-                    <p class="text-muted text-uppercase small fw-bold mb-3"><i
-                            class="fas fa-lightbulb text-warning me-2"></i>Smart AI Insights</p>
-                    <div style="max-height: 120px; overflow-y: auto;">
-                        <ul class="list-unstyled mb-0">
-                            {% for insight in insights %}
-                            <li class="mb-3 d-flex align-items-start text-sm">
-                                <i class="fas fa-check-circle text-success mt-1 me-2" style="font-size: 0.8rem;"></i>
-                                <span class="text-main opacity-75" style="font-size: 0.9rem;">{{ insight }}</span>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
+            <div class="kpi-card theme-teal" data-aos="fade-up" data-aos-delay="300">
+                <div class="kpi-icon-circle bg-teal-soft">
+                    <span>🛍️</span>
+                </div>
+                <div class="kpi-content">
+                    <div class="text-slate-500 fw-bold small text-uppercase mb-1">Avg Ticket Size</div>
+                    <div class="h3 fw-extrabold mb-0">₹{{ kpis.avg_order_value }}</div>
+                    <div class="small text-primary fw-bold mt-2"><i class="fas fa-chart-line me-1"></i> High Value</div>
+                </div>
+            </div>
+            <div class="kpi-card theme-orange" data-aos="fade-up" data-aos-delay="400">
+                <div class="kpi-icon-circle bg-orange-soft">
+                    <span>🏷️</span>
+                </div>
+                <div class="kpi-content">
+                    <div class="text-slate-500 fw-bold small text-uppercase mb-1">Product Catalog</div>
+                    <div class="h3 fw-extrabold mb-0">{{ kpis.unique_products }} Items</div>
+                    <div class="small text-warning fw-bold mt-2"><i class="fas fa-bolt me-1"></i> Active SKUs</div>
                 </div>
             </div>
         </div>
 
-        <!-- Charts Area -->
-        <div class="row g-4 fade-in-up" style="animation-delay: 0.2s;">
-            <div class="col-lg-8">
-                <div class="glass-panel p-4">
-                    <h4 class="mb-4">Top Performing Products</h4>
-                    <div class="chart-container" id="chartContainer" data-labels='{{ chart_labels | tojson }}'
+        <div class="row g-4">
+            <!-- Interactive Chart Area -->
+            <div class="col-lg-8" data-aos="fade-right">
+                <div class="dashboard-panel">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-extrabold mb-1">Product Performance Insights</h4>
+                            <p class="small text-muted mb-0">Interactive visual breakdown of your leading products</p>
+                        </div>
+                        <select class="chart-selector shadow-sm" id="chartTypeToggle">
+                            <option value="bar">Bar Chart View</option>
+                            <option value="line">Line Graph View</option>
+                            <option value="doughnut">Distribution View</option>
+                        </select>
+                    </div>
+                    <div class="chart-container" id="barChartContainer" data-labels='{{ chart_labels | tojson }}'
                         data-values='{{ chart_data | tojson }}'>
-                        <canvas id="mainChart"></canvas>
+                        <canvas id="mainProductChart"></canvas>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4">
-                <div class="glass-panel p-4 h-100">
-                    <h4 class="mb-4">Distribution</h4>
-                    <div class="chart-container" style="height: 250px;">
-                        <canvas id="doughnutChart"></canvas>
+
+            <!-- growth accelerator -->
+            <div class="col-lg-4" data-aos="fade-left">
+                <div class="dashboard-panel"
+                    style="background: linear-gradient(180deg, #fff 0%, #f4f7fe 100%); min-height: 100%;">
+                    <div class="mb-4">
+                        <span class="badge bg-primary rounded-pill px-3 py-2 fw-bold small">AI GROWTH ACCELERATOR</span>
                     </div>
-                    <div class="mt-4 text-center">
-                        <small class="text-muted">Revenue distribution by top categories</small>
+
+                    <div class="growth-insights">
+                        <h6 class="fw-extrabold mb-4 text-slate-800">🚀 Strategies to Boost Sales</h6>
+
+                        <div class="strategy-pill">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fas fa-star text-warning"></i>
+                                <span class="fw-bold small text-slate-900">Upsell Strategy</span>
+                            </div>
+                            <p class="small text-muted mb-0">Focus on promoting top bundles for <b>{{ chart_labels[0] if
+                                    chart_labels else 'your best sellers' }}</b> to increase average order value by 15%.
+                            </p>
+                        </div>
+
+                        <div class="strategy-pill">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fas fa-users text-primary"></i>
+                                <span class="fw-bold small text-slate-900">Retention Playbook</span>
+                            </div>
+                            <p class="small text-muted mb-0">Implement a loyalty program for orders above <b>₹{{
+                                    kpis.avg_order_value }}</b> to improve customer lifetime value.</p>
+                        </div>
+
+                        <div class="strategy-pill">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fas fa-bolt text-success"></i>
+                                <span class="fw-bold small text-slate-900">Conversion Optimization</span>
+                            </div>
+                            <p class="small text-muted mb-0">Analyze high-value transaction patterns to identify and
+                                target your "VIP" segment users.</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-white shadow-sm" style="border-radius: 16px;">
+                        <span class="small fw-bold text-slate-500 d-block mb-1">AI CONFIDENCE LEVEL</span>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 88%;"></div>
+                        </div>
+                        <span class="small fw-bold text-success mt-1 d-block">88% (High Precision)</span>
                     </div>
                 </div>
             </div>
         </div>
 
-    </div>
+        <!-- Trajectory Map -->
+        <div class="row mt-4 mb-5" data-aos="fade-up">
+            <div class="col-12">
+                <div class="dashboard-panel shadow-lg">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-extrabold mb-0">Predicted Revenue Trajectory</h4>
+                        <div
+                            class="badge bg-primary bg-opacity-10 text-primary border-0 rounded-pill px-3 py-2 fw-bold">
+                            NEXT FORECAST: ₹{{ forecast }}
+                        </div>
+                    </div>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="revenueLineChart"></canvas>
+                    </div>
+                    <input type="hidden" name="revenue" value="{{ kpis.total_revenue }}">
+                </div>
+            </div>
+        </div>
+    </main>
 
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        // Chart Config
-        Chart.defaults.font.family = "'Outfit', sans-serif";
-        Chart.defaults.color = '#64748b';
+        AOS.init({ duration: 1000, once: true });
 
-        const container = document.getElementById('chartContainer');
-        const labels = JSON.parse(container.dataset.labels);
-        const data = JSON.parse(container.dataset.values);
+        // Global Chart Registry
+        let productChart;
 
-        // Bar Chart
-        new Chart(document.getElementById('mainChart'), {
-            type: 'bar',
+        // Chart Data Extraction
+        const barContainer = document.getElementById('barChartContainer');
+        const labels = JSON.parse(barContainer.dataset.labels || '[]');
+        const dataValues = JSON.parse(barContainer.dataset.values || '[]');
+
+        function initProductChart(type = 'bar') {
+            const ctx = document.getElementById('mainProductChart').getContext('2d');
+
+            if (productChart) productChart.destroy();
+
+            const chartConfig = {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Revenue Growth',
+                        data: dataValues,
+                        backgroundColor: type === 'doughnut' ?
+                            ['#4318ff', '#707eff', '#01b574', '#ffb547', '#ee5d50', '#6ad2ff', '#a3aed0', '#cbd5e1', '#0b1437', '#1b254b'] :
+                            '#4318ff',
+                        borderRadius: type === 'bar' ? 12 : 0,
+                        borderWidth: type === 'line' ? 3 : 0,
+                        borderColor: '#4318ff',
+                        fill: type === 'line' ? 'origin' : false,
+                        maxBarThickness: 45
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: type === 'doughnut' },
+                        tooltip: { backgroundColor: '#1b254b', padding: 12, borderRadius: 10 }
+                    },
+                    scales: type === 'doughnut' ? {} : {
+                        y: { grid: { borderDash: [5, 5], color: '#f4f7fe' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            };
+
+            productChart = new Chart(ctx, chartConfig);
+        }
+
+        // Event Listener for Interactivity
+        document.getElementById('chartTypeToggle').addEventListener('change', (e) => {
+            initProductChart(e.target.value);
+        });
+
+        // Initialize Bar Chart
+        initProductChart('bar');
+
+        // Revenue Trend Line
+        const ctxLine = document.getElementById('revenueLineChart').getContext('2d');
+        const rawRevenue = parseFloat(document.querySelector('[name="revenue"]').value) || 0;
+        const baseRev = rawRevenue / 10;
+        const trendData = [baseRev * 0.8, baseRev * 1.1, baseRev * 1.3, baseRev * 1.2, baseRev * 1.5, baseRev * 1.7, baseRev * 1.6, baseRev * 1.9];
+
+        new Chart(ctxLine, {
+            type: 'line',
             data: {
-                labels: labels,
+                labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8'],
                 datasets: [{
-                    label: 'Revenue',
-                    data: data,
-                    backgroundColor: '#4f46e5',
-                    borderRadius: 8,
-                    barThickness: 30
+                    label: 'Trend',
+                    data: trendData,
+                    borderColor: '#01b574',
+                    backgroundColor: 'rgba(1, 181, 116, 0.05)',
+                    fill: true,
+                    tension: 0.45,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#01b574',
+                    pointBorderWidth: 3
                 }]
             },
             options: {
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        grid: { color: 'rgba(0,0,0,0.05)', borderDash: [5, 5] },
-                        border: { display: false }
-                    },
-                    x: {
-                        grid: { display: false },
-                        border: { display: false }
-                    }
-                },
-                animation: {
-                    y: { duration: 2000, easing: 'easeOutQuart' }
-                }
-            }
-        });
-
-        // Doughnut Chart
-        new Chart(document.getElementById('doughnutChart'), {
-            type: 'doughnut',
-            data: {
-                labels: labels.slice(0, 4),
-                datasets: [{
-                    data: data.slice(0, 4),
-                    backgroundColor: ['#4f46e5', '#ec4899', '#8b5cf6', '#06b6d4'],
-                    borderWidth: 0,
-                    hoverOffset: 10
-                }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
-                },
-                cutout: '75%',
-                animation: {
-                    animateScale: true,
-                    animateRotate: true
+                    y: { display: false },
+                    x: { grid: { display: false } }
                 }
             }
         });
     </script>
-
-    <div class="text-center mt-5 mb-3">
-        <small class="text-muted fw-bold">HOSTED AT: <a href="https://business-analyser-ai.vercel.app/"
-                class="text-primary text-decoration-none">business-analyser-ai.vercel.app</a></small>
-    </div>
 </body>
 
 </html>

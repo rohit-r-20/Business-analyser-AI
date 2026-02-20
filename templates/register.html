@@ -4,54 +4,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | AI Analyst</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>Register | BizAnalyzer AI</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 3.5rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 480px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            z-index: 10;
+        }
+
+        .form-control {
+            background: rgba(244, 247, 254, 0.5);
+            border: 1px solid #e0e5f2;
+            border-radius: 15px;
+            padding: 0.8rem 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background: white;
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(67, 24, 255, 0.05);
+        }
+    </style>
 </head>
 
-<body data-theme="light">
+<body>
+    <div class="mesh-gradient"></div>
+    <div class="blob" style="top: -10%; left: -10%; background: var(--success);"></div>
+    <div class="blob" style="bottom: -10%; right: -10%; background: var(--primary);"></div>
 
-    <div class="container vh-100 d-flex justify-content-center align-items-center">
-        <div class="glass-card p-5 animate-fade-in" style="width: 100%; max-width: 400px;">
-            <div class="text-center mb-4">
-                <i class="fas fa-rocket fa-3x text-gradient mb-3"></i>
-                <h2>Get Started</h2>
-                <p class="text-muted">Create your personal analytics dashboard</p>
+    <div class="login-container">
+        <div class="login-card animate-fade-up">
+            <div class="sidebar-logo mb-4" style="background: linear-gradient(135deg, var(--success), var(--primary));">
+                <i class="fas fa-rocket text-white"></i>
             </div>
+
+            <h2 class="fw-extrabold mb-1" style="color: var(--slate-800); letter-spacing: -0.5px;">Join the Future</h2>
+            <p class="text-muted mb-4 fw-medium">Create your account to start analyzing data with AI.</p>
 
             {% with messages = get_flashed_messages() %}
             {% if messages %}
-            <div class="alert alert-warning py-2">{{ messages[0] }}</div>
+            <div class="alert alert-warning py-3 rounded-4 mb-4 border-0 shadow-sm"
+                style="background: rgba(255, 181, 71, 0.1); color: var(--warning); font-weight: 700;">
+                <i class="fas fa-exclamation-circle me-2"></i> {{ messages[0] }}
+            </div>
             {% endif %}
             {% endwith %}
 
             <form method="post">
                 <div class="mb-3">
-                    <label class="form-label text-muted small fw-bold">USERNAME</label>
-                    <input type="text" name="username" class="form-control-glass w-100" placeholder="Choose a username"
+                    <label class="form-label fw-bold small text-uppercase" style="color: var(--slate-500);">Choose
+                        Username</label>
+                    <input type="text" name="username" class="form-control" placeholder="e.g. analyst_pro" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-uppercase" style="color: var(--slate-500);">Create
+                        Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="Min. 8 characters"
                         required>
                 </div>
-
-                <div class="mb-4">
-                    <label class="form-label text-muted small fw-bold">PASSWORD</label>
-                    <input type="password" name="password" class="form-control-glass w-100"
-                        placeholder="Create a password" required>
-                </div>
-
-                <button class="btn btn-premium w-100 mb-3">
-                    Register Now
-                </button>
+                <button type="submit" class="btn btn-primary w-100 py-3 mb-4"
+                    style="background: linear-gradient(135deg, var(--success), var(--primary-light));">Create
+                    Account</button>
             </form>
 
             <div class="text-center">
-                <span class="text-muted">Already have an account?</span> <a href="/login"
-                    class="fw-bold text-decoration-none">Sign In</a>
+                <span class="text-muted fw-medium">Already a member?</span>
+                <a href="/login" class="fw-bold text-decoration-none ms-1" style="color: var(--primary);">Sign in
+                    instead</a>
             </div>
         </div>
     </div>
-
 </body>
 
 </html>

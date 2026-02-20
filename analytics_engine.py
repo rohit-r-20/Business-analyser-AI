@@ -76,3 +76,50 @@ def forecast_sales(df):
         return max(0.0, prediction) 
     except:
         return 0.0
+
+def generate_dashboard_data(df):
+    """
+    Consolidates KPI metrics, chart data, forecasts, and insights into 
+    a single dictionary for the dashboard UI.
+    """
+    # 1. Identify key columns consistent with existing logic
+    prod_col = next((c for c in df.columns if any(k in c.lower() for k in ['product', 'item', 'description'])), None)
+    
+    # 2. KPI Metrics
+    total_revenue = float(df['amount'].sum()) if 'amount' in df.columns else 0.0
+    total_orders = int(len(df))
+    avg_order_value = total_revenue / total_orders if total_orders > 0 else 0.0
+    unique_products = int(df[prod_col].nunique()) if prod_col else 0
+    
+    # 3. Chart Data
+    # Sales by Product
+    sales_by_product = {}
+    if prod_col and 'amount' in df.columns:
+        sales_by_product = df.groupby(prod_col)['amount'].sum().sort_values(ascending=False).to_dict()
+    
+    # Sales Trend (sorted by date if possible, otherwise index)
+    date_col = next((c for c in df.columns if any(k in c.lower() for k in ['date', 'time', 'day'])), None)
+    if date_col and 'amount' in df.columns:
+        try:
+            temp_df = df.copy()
+            temp_df[date_col] = pd.to_datetime(temp_df[date_col], errors='coerce')
+            temp_df = temp_df.dropna(subset=[date_col]).sort_values(date_col)
+            sales_trend = temp_df['amount'].tolist()
+        except:
+            sales_trend = df['amount'].tolist()
+    else:
+        sales_trend = df['amount'].tolist() if 'amount' in df.columns else []
+
+    # 4. Consolidate into final dictionary
+    dashboard_data = {
+        "total_revenue": total_revenue,
+        "total_orders": total_orders,
+        "avg_order_value": round(avg_order_value, 2),
+        "unique_products": unique_products,
+        "sales_by_product": sales_by_product,
+        "sales_trend": sales_trend,
+        "next_sales_prediction": forecast_sales(df),
+        "insights": generate_insights(df, total_revenue)
+    }
+    
+    return dashboard_data

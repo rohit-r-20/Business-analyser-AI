@@ -4,62 +4,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Analyst | Upload</title>
+    <title>AI Analyst | Smart Data Upload</title>
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <!-- Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Bootstrap grid only -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap-grid.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Icon & Animation Libraries -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        .drop-zone {
+            border: 2px dashed #e0e5f2;
+            border-radius: 24px;
+            padding: 4rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: rgba(244, 247, 254, 0.4);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 20px 40px rgba(67, 24, 255, 0.05);
+        }
+
+        .drop-zone.dragover {
+            border-color: var(--success);
+            background: rgba(1, 181, 116, 0.05);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--slate-900), var(--primary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #loading-overlay {
+            display: none;
+        }
+    </style>
 </head>
 
-<body class="d-flex align-items-center justify-content-center">
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="loader-spinner"></div>
+        <h3 class="fw-bold">Intelligence Engine Active</h3>
+        <p class="opacity-75">AI is analyzing your data patterns...</p>
+    </div>
 
-    <div class="container text-center">
+    <div class="hero-gradient">
+        <div class="container">
+            <div class="row min-vh-100 align-items-center">
+                <div class="col-lg-6 mb-5 mb-lg-0" data-aos="fade-right">
+                    <div class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-4 fw-bold">
+                        <i class="fas fa-sparkles me-1 text-warning"></i> Next-Gen Analytics
+                    </div>
+                    <h1 class="hero-title fw-extrabold">Turn Bulk Data into <br><span
+                            class="text-primary-gradient">Strategic Growth</span></h1>
+                    <p class="lead text-muted mb-5 fw-medium">Upload your business records and let our AI engine uncover
+                        revenue patterns, customer trends, and predictive growth models in seconds.</p>
 
-        <div class="glass-card p-5 mx-auto animate-float" style="max-width: 500px;">
-            <div class="mb-4">
-                <i class="fas fa-cube fa-3x text-gradient"></i>
-            </div>
-
-            <h1 class="mb-2">Business Analyser AI</h1>
-            <p class="text-muted mb-5">Upload your CSV or Excel files to unlock instant AI-powered insights and
-                forecasts.</p>
-
-            {% if error %}
-            <div class="p-3 mb-4 rounded bg-danger bg-opacity-10 text-danger">
-                <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
-            </div>
-            {% endif %}
-
-            <form method="post" enctype="multipart/form-data">
-                <div class="mb-4 text-start">
-                    <label class="d-block mb-2 text-sm font-weight-bold text-muted text-uppercase"
-                        style="font-size: 0.75rem; letter-spacing: 1px;">Select Data File</label>
-                    <input type="file" name="file" class="w-100 p-3 rounded border border-light bg-white bg-opacity-50"
-                        style="backdrop-filter: blur(5px); outline: none;" required>
+                    <div class="d-flex gap-4 align-items-center">
+                        <div class="d-flex -space-x-2">
+                            <img src="https://i.pravatar.cc/40?u=1"
+                                class="rounded-circle border border-2 border-white shadow-sm" style="width: 40px;">
+                            <img src="https://i.pravatar.cc/40?u=2"
+                                class="rounded-circle border border-2 border-white shadow-sm"
+                                style="width: 40px; margin-left: -12px;">
+                            <img src="https://i.pravatar.cc/40?u=3"
+                                class="rounded-circle border border-2 border-white shadow-sm"
+                                style="width: 40px; margin-left: -12px;">
+                        </div>
+                        <div class="small fw-bold text-slate-500">Trusted by 500+ <br>Business Analysts</div>
+                    </div>
                 </div>
 
-                <button class="btn-primary-glow w-100">
-                    <i class="fas fa-magic me-2"></i> Analyze Data
-                </button>
-            </form>
+                <div class="col-lg-5 offset-lg-1" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="upload-card">
+                        <div class="text-center mb-5">
+                            <div class="sidebar-logo mb-3 mx-auto shadow-lg floating">
+                                <i class="fas fa-file-invoice-dollar text-white"></i>
+                            </div>
+                            <h3 class="fw-bold" style="color: var(--slate-800);">Upload Dataset</h3>
+                            <p class="text-muted small">Supports Excel, CSV, and Tabular formats</p>
+                        </div>
 
-            <div class="mt-4 pt-4 border-top border-light">
-                <p class="small text-muted mb-0">
-                    <i class="fas fa-shield-alt me-1"></i> Secure & Private Processing
-                </p>
+                        {% if error %}
+                        <div class="alert alert-danger py-3 rounded-4 mb-4 border-0 shadow-sm"
+                            style="background: rgba(238, 93, 80, 0.1); color: var(--danger); font-weight: 700;">
+                            <i class="fas fa-exclamation-circle me-2"></i> {{ error }}
+                        </div>
+                        {% endif %}
+
+                        <form id="uploadForm" method="post" enctype="multipart/form-data">
+                            <label for="fileInput" id="dropZone" class="drop-zone d-block mb-4">
+                                <div class="mb-3">
+                                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none"
+                                        class="text-primary opacity-50 mx-auto">
+                                        <path
+                                            d="M7 16.5C7 16.5 7 13.5 10 13.5C13 13.5 13 16.5 16 16.5M12 3V11M12 3L9 6M12 3L15 6M4 17C4 18.1046 4.89543 19 6 19H18C19.1046 19 20 18.1046 20 17V15C20 13.8954 19.1046 13 18 13H16M4 17V15C4 13.8954 4.89543 13 6 13H8"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                    </svg>
+                                </div>
+                                <h5 id="fileName" class="fw-bold mb-1" style="color: var(--slate-700);">Click or Drag
+                                    File</h5>
+                                <p class="small text-muted mb-0">Max file size: 25MB</p>
+                                <input type="file" name="file" id="fileInput" required accept=".csv, .xlsx, .xls">
+                            </label>
+
+                            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-lg"
+                                style="letter-spacing: 0.5px;">
+                                <i class="fas fa-rocket me-2"></i> ANALYZE DATA NOW
+                            </button>
+                        </form>
+
+                        <div class="mt-5 text-center pt-4 border-top border-light">
+                            <div class="d-flex justify-content-center gap-4">
+                                <i class="fab fa-google text-slate-400"></i>
+                                <i class="fab fa-microsoft text-slate-400"></i>
+                                <i class="fas fa-lock text-success" title="Secure Processing"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
     </div>
 
-    <div class="fixed-bottom text-center p-3">
-        <small class="text-muted fw-bold">HOSTED AT: <a href="https://business-analyser-ai.vercel.app/"
-                class="text-primary text-decoration-none">business-analyser-ai.vercel.app</a></small>
-    </div>
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 1000, once: true });
+
+        const form = document.getElementById('uploadForm');
+        const overlay = document.getElementById('loading-overlay');
+        const fileInput = document.getElementById('fileInput');
+        const fileNameDisplay = document.getElementById('fileName');
+        const dropZone = document.getElementById('dropZone');
+
+        fileInput.addEventListener('change', function () {
+            if (this.files[0]) {
+                fileNameDisplay.textContent = this.files[0].name;
+                fileNameDisplay.style.color = "var(--primary)";
+            }
+        });
+
+        // Drag and Drop Effects
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            });
+        });
+
+        form.addEventListener('submit', function () {
+            overlay.style.display = 'flex';
+        });
+    </script>
 </body>
 
 </html>
