@@ -126,14 +126,15 @@
                                     </svg>
                                 </div>
                                 <h5 id="fileName" class="fw-bold mb-1" style="color: var(--slate-700);">Click or Drag
-                                    File</h5>
-                                <p class="small text-muted mb-0">Max file size: 25MB</p>
-                                <input type="file" name="file" id="fileInput" required accept=".csv, .xlsx, .xls">
+                                    Files</h5>
+                                <p class="small text-muted mb-0">Bulk upload supported: CSV, XLSX, XLS</p>
+                                <input type="file" name="file" id="fileInput" required accept=".csv, .xlsx, .xls"
+                                    multiple>
                             </label>
 
                             <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-lg"
                                 style="letter-spacing: 0.5px;">
-                                <i class="fas fa-rocket me-2"></i> ANALYZE DATA NOW
+                                <i class="fas fa-layer-group me-2"></i> MERGE & ANALYZE ALL
                             </button>
                         </form>
 
@@ -162,9 +163,16 @@
         const dropZone = document.getElementById('dropZone');
 
         fileInput.addEventListener('change', function () {
-            if (this.files[0]) {
-                fileNameDisplay.textContent = this.files[0].name;
+            if (this.files.length > 0) {
+                if (this.files.length === 1) {
+                    fileNameDisplay.textContent = this.files[0].name;
+                } else {
+                    fileNameDisplay.textContent = `${this.files.length} Files Selected for Merging`;
+                }
                 fileNameDisplay.style.color = "var(--primary)";
+            } else {
+                fileNameDisplay.textContent = "Click or Drag Files";
+                fileNameDisplay.style.color = "var(--slate-700)";
             }
         });
 
@@ -181,6 +189,15 @@
                 e.preventDefault();
                 dropZone.classList.remove('dragover');
             });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files; // Sync input with dropped files
+            // Trigger change manually since setting .files doesn't fire it
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
         });
 
         form.addEventListener('submit', function () {

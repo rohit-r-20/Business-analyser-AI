@@ -164,20 +164,20 @@ def process_file_stream(file_stream, filename):
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
     if request.method == "POST":
-        file = request.files["file"]
-        if file and file.filename != "":
-             # FIX: Do not save to disk (read-only). Process directly from memory.
-            try:
-                # Iterate on the stream directly
-                df, prod_col, qty_col, date_col = process_file_stream(file, file.filename)
+        files = request.files.getlist("file")
+        if not files or files[0].filename == "":
+            return render_template("upload.html", error="No files selected.")
+            
+        try:
+            all_dfs = []
+            curr_user_id = session.get('user_id', 1)
+            
+            for file in files:
+                # Process each file directly from memory
+                df, _, _, _ = process_file_stream(file, file.filename)
+                all_dfs.append(df)
                 
-                # Consolidate analytics using the new engine function
-                data = generate_dashboard_data(df)
-                
-                # SAVE HISTORY: Insert record into upload_history
-                # Use session['user_id'] if available, else a default (for safety without full auth context)
-                curr_user_id = session.get('user_id', 1) 
-                # Read file content for storage
+                # SAVE HISTORY: Insert record for each file
                 file.seek(0)
                 file_bytes = file.read()
                 try:
@@ -189,44 +189,47 @@ def dashboard():
                 except Exception as db_err:
                     print(f"Database Error: {db_err}")
 
-                # Prepare data for charts (Limiting for UI clarity)
-                chart_labels = list(data['sales_by_product'].keys())[:10]
-                chart_data = list(data['sales_by_product'].values())[:10]
+            if not all_dfs:
+                return render_template("upload.html", error="Could not process any of the uploaded files.")
 
-                # STORE IN SESSION: For AI Chat Assistant
-                session['last_analysis'] = {
-                    "kpis": {
-                        "total_revenue": data["total_revenue"],
-                        "total_orders": data["total_orders"],
-                        "avg_order_value": data["avg_order_value"],
-                        "unique_products": data["unique_products"]
-                    },
-                    "forecast": round(data["next_sales_prediction"], 2),
-                    "insights": data["insights"],
-                    "top_product": chart_labels[0] if chart_labels else "N/A"
-                }
+            # MERGE ALL DATA: Concatenate all dataframes
+            merged_df = pd.concat(all_dfs, ignore_index=True)
+            
+            # Consolidate analytics using the merged data
+            data = generate_dashboard_data(merged_df)
+            
+            # Prepare data for charts
+            chart_labels = list(data['sales_by_product'].keys())[:10]
+            chart_data = list(data['sales_by_product'].values())[:10]
 
-                return render_template(
-                    "dashboard.html",
-                    kpis={
-                        "total_revenue": data["total_revenue"],
-                        "total_orders": data["total_orders"],
-                        "avg_order_value": data["avg_order_value"],
-                        "unique_products": data["unique_products"]
-                    },
-                    charts={
-                        "sales_by_product": data["sales_by_product"],
-                        "sales_trend": data["sales_trend"]
-                    },
-                    forecast=round(data["next_sales_prediction"], 2),
-                    insights=data["insights"],
-                    # Keeping some legacy names for UI chart scripts if they still use them
-                    revenue=data["total_revenue"],
-                    chart_labels=chart_labels,
-                    chart_data=chart_data
-                )
-            except Exception as e:
-                return render_template("upload.html", error=f"Processing Error: {str(e)}")
+            # STORE IN SESSION: For AI Chat Assistant
+            session['last_analysis'] = {
+                "kpis": {
+                    "total_revenue": data["total_revenue"],
+                    "total_orders": data["total_orders"],
+                    "avg_order_value": data["avg_order_value"],
+                    "unique_products": data["unique_products"]
+                },
+                "forecast": round(data["next_sales_prediction"], 2),
+                "insights": data["insights"],
+                "top_product": chart_labels[0] if chart_labels else "N/A"
+            }
+
+            return render_template(
+                "dashboard.html",
+                kpis=data,
+                charts={
+                    "sales_by_product": data["sales_by_product"],
+                    "sales_trend": data["sales_trend"]
+                },
+                forecast=round(data["next_sales_prediction"], 2),
+                insights=data["insights"],
+                revenue=data["total_revenue"],
+                chart_labels=chart_labels,
+                chart_data=chart_data
+            )
+        except Exception as e:
+            return render_template("upload.html", error=f"Collective Processing Error: {str(e)}")
 
     return render_template("upload.html")
 
