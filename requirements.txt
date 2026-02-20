@@ -1,6 +1,12 @@
-flask
+Flask
 pandas
-numpy==1.26.4
+numpy
 openpyxl
 reportlab
 xlrd
+python-dotenv
+Flask-Dance
+matplotlib
+requests
+blinker
+Werkzeug
