@@ -1,6 +1,6 @@
 Flask
 pandas
-numpy
+numpy==1.26.4
 openpyxl
 reportlab
 xlrd
@@ -10,3 +10,4 @@ matplotlib
 requests
 blinker
 Werkzeug
+gunicorn

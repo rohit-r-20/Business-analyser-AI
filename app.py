@@ -1,4 +1,7 @@
 import os
+# VERCEL OPTIMIZATION: Set matplotlib config dir to /tmp to avoid font cache timeout
+os.environ['MPLCONFIGDIR'] = '/tmp/matplotlib'
+
 import datetime
 import sqlite3
 import pandas as pd
@@ -24,9 +27,13 @@ from analytics_engine import generate_insights, forecast_sales, generate_dashboa
 
 # ---------------- CONFIGURATION ----------------
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
-load_dotenv()
-DB_PATH = os.path.join(app.instance_path, 'database.db')
+app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")
+
+# VERCEL COMPATIBILITY: Use /tmp for SQLite as the root filesystem is read-only
+if os.environ.get('VERCEL') == '1':
+    DB_PATH = '/tmp/database.db'
+else:
+    DB_PATH = os.path.join(app.instance_path, 'database.db')
 
 # Google OAuth Configuration
 google_bp = make_google_blueprint(
@@ -44,35 +51,49 @@ def get_db_connection():
     return conn
 
 def init_db():
-    if not os.path.exists(app.instance_path):
-        os.makedirs(app.instance_path)
-    conn = get_db_connection()
-    # Ensure user table exists with modern schema
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS user (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            login_type TEXT DEFAULT 'local'
-        )
-    ''')
-    # Add login_type if it doesn't exist (migration)
     try:
-        conn.execute('ALTER TABLE user ADD COLUMN login_type TEXT DEFAULT "local"')
-    except sqlite3.OperationalError:
-        pass
+        # Only try to create directories if we're not on Vercel or if we're in /tmp
+        db_dir = os.path.dirname(DB_PATH)
+        if db_dir and not os.path.exists(db_dir):
+            try:
+                os.makedirs(db_dir, exist_ok=True)
+            except OSError:
+                print(f"Warning: Could not create directory {db_dir}. This is expected on Vercel.")
 
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS upload_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            file_name TEXT,
-            upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    conn.close()
+        conn = get_db_connection()
+        # Ensure user table exists with modern schema
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS user (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                login_type TEXT DEFAULT 'local'
+            )
+        ''')
+        # Add login_type if it doesn't exist (migration)
+        try:
+            conn.execute('ALTER TABLE user ADD COLUMN login_type TEXT DEFAULT "local"')
+        except sqlite3.OperationalError:
+            pass
 
-init_db()
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS upload_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                file_name TEXT,
+                upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Database Init Error: {e}")
+
+# Call init_db gracefully
+try:
+    init_db()
+except:
+    pass
 # ---------------- UTILITY ----------------
 def clean_currency(value):
     if isinstance(value, str):
